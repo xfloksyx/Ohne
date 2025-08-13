@@ -10,7 +10,7 @@ from pathlib import Path
 # -----------------------------
 DEMUCS_MODEL = "htdemucs"  # Pretrained Demucs model
 
-def process_video(youtube_url, log_func):
+def process_video(youtube_url, final_title, action, log_func):
     try:
         log_func("📥 Downloading video...")
         # Download video using yt-dlp
@@ -51,21 +51,25 @@ def process_video(youtube_url, log_func):
             log_func("❌ Vocals file not found!")
             return
 
-        # Merge vocals with video
-        output_video = "final_video.mp4"
-        log_func("🎬 Merging vocals with video...")
-        subprocess.run([
-            "ffmpeg", "-y",
-            "-i", str(video_file),
-            "-i", vocals_path,
-            "-c:v", "copy",
-            "-map", "0:v:0",
-            "-map", "1:a:0",
-            "-shortest",
-            output_video
-        ], check=True)
-
-        log_func(f"✅ Done! Saved as {output_video}")
+        # Decide action
+        if action == "extract":
+            output_audio = f"{final_title}_vocals.wav"
+            shutil.copy(vocals_path, output_audio)
+            log_func(f"✅ Vocals extracted: {output_audio}")
+        elif action == "merge":
+            output_video = f"{final_title}.mp4"
+            log_func(f"🎬 Merging vocals into video as {output_video}...")
+            subprocess.run([
+                "ffmpeg", "-y",
+                "-i", str(video_file),
+                "-i", vocals_path,
+                "-c:v", "copy",
+                "-map", "0:v:0",
+                "-map", "1:a:0",
+                "-shortest",
+                output_video
+            ], check=True)
+            log_func(f"✅ Done! Saved as {output_video}")
 
         # Cleanup intermediate files
         os.remove(audio_file)
@@ -81,11 +85,15 @@ def process_video(youtube_url, log_func):
 # -----------------------------
 def start_processing():
     url = url_entry.get().strip()
+    final_title = title_entry.get().strip()
+    action = action_var.get()
     if not url:
         log("❌ Please enter a valid YouTube URL.")
         return
-    threading.Thread(target=process_video, args=(url, log), daemon=True).start()
-
+    if not final_title:
+        log("❌ Please enter a title for the output file.")
+        return
+    threading.Thread(target=process_video, args=(url, final_title, action, log), daemon=True).start()
 
 def log(message):
     log_textbox.insert("end", message + "\n")
@@ -99,21 +107,28 @@ ctk.set_default_color_theme("blue")
 
 app = ctk.CTk()
 app.title("YouTube Vocal Extractor")
-app.geometry("500x350")
+app.geometry("600x450")
 
 frame = ctk.CTkFrame(app)
 frame.pack(pady=20, padx=20, fill="both", expand=True)
 
-label = ctk.CTkLabel(frame, text="Enter YouTube Link:")
-label.pack(pady=10)
-
-url_entry = ctk.CTkEntry(frame, width=400)
+ctk.CTkLabel(frame, text="Enter YouTube Link:").pack(pady=5)
+url_entry = ctk.CTkEntry(frame, width=500)
 url_entry.pack(pady=5)
 
-start_btn = ctk.CTkButton(frame, text="Download & Process", command=start_processing)
-start_btn.pack(pady=10)
+ctk.CTkLabel(frame, text="Enter output title:").pack(pady=5)
+title_entry = ctk.CTkEntry(frame, width=500)
+title_entry.pack(pady=5)
 
-log_textbox = ctk.CTkTextbox(frame, width=450, height=200)
+# Action selection
+action_var = ctk.StringVar(value="merge")
+ctk.CTkLabel(frame, text="Select action:").pack(pady=5)
+ctk.CTkRadioButton(frame, text="Extract Vocals Only", variable=action_var, value="extract").pack()
+ctk.CTkRadioButton(frame, text="Merge Vocals with Video", variable=action_var, value="merge").pack()
+
+ctk.CTkButton(frame, text="Start Processing", command=start_processing).pack(pady=10)
+
+log_textbox = ctk.CTkTextbox(frame, width=550, height=250)
 log_textbox.pack(pady=10)
 
 app.mainloop()
