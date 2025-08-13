@@ -115,8 +115,25 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
         if action == "extract":
             output_audio = f"{final_title}.wav"
             shutil.copy(vocals_path, output_audio)
+            
+            # Get full path and display it
+            full_path = os.path.abspath(output_audio)
             log_func(f"Vocals extracted: {output_audio}")
+            log_func(f"Full path: {full_path}")
             progress_func(100, "Complete! Vocals extracted")
+            
+            # Auto-open the audio file
+            try:
+                if sys.platform.startswith('win'):
+                    os.startfile(full_path)
+                elif sys.platform.startswith('darwin'):
+                    subprocess.call(["open", full_path])
+                else:
+                    subprocess.call(["xdg-open", full_path])
+                log_func("Opening audio file...")
+            except Exception as e:
+                log_func(f"Could not open file automatically: {e}")
+                
         elif action == "merge":
             output_video = f"{final_title}.mp4"
             log_func(f"Merging vocals into video as {output_video}...")
@@ -144,9 +161,24 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
             process.wait()
             if process.returncode != 0:
                 raise subprocess.CalledProcessError(process.returncode, "ffmpeg merge")
-                
+            
+            # Get full path and display it
+            full_path = os.path.abspath(output_video)
             log_func(f"Done! Saved as {output_video}")
+            log_func(f"Full path: {full_path}")
             progress_func(100, f"Complete! Saved as {output_video}")
+            
+            # Auto-open the video file
+            try:
+                if sys.platform.startswith('win'):
+                    os.startfile(full_path)
+                elif sys.platform.startswith('darwin'):
+                    subprocess.call(["open", full_path])
+                else:
+                    subprocess.call(["xdg-open", full_path])
+                log_func("Opening video file...")
+            except Exception as e:
+                log_func(f"Could not open file automatically: {e}")
 
         # Cleanup
         os.remove(audio_file)
