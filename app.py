@@ -16,6 +16,9 @@ DEMUCS_MODEL = "htdemucs"
 
 def process_video(youtube_url, local_video_path, final_title, action, log_func, progress_func):
     try:
+        videos_folder = "videos"
+        os.makedirs(videos_folder, exist_ok=True)
+        
         progress_func(0, "Initializing...")
         
         if local_video_path:
@@ -76,7 +79,7 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
         log_func(f"Audio extracted: {audio_file}")
         progress_func(50, "Audio extraction complete")
 
-        log_func("Isolating vocals with Demucs...")
+        log_func("Isolating vocals...")
         progress_func(55, "Starting vocal separation...")
         
         # Demucs with filtered progress output
@@ -113,7 +116,7 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
             return
 
         if action == "extract":
-            output_audio = f"{final_title}.wav"
+            output_audio = os.path.join(videos_folder, f"{final_title}.wav")
             shutil.copy(vocals_path, output_audio)
             
             # Get full path and display it
@@ -135,7 +138,7 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
                 log_func(f"Could not open file automatically: {e}")
                 
         elif action == "merge":
-            output_video = f"{final_title}.mp4"
+            output_video = os.path.join(videos_folder, f"{final_title}.mp4")
             log_func(f"Merging vocals into video as {output_video}...")
             progress_func(95, "Merging vocals with video...")
             
@@ -297,6 +300,17 @@ def about_dialog():
     about_window.configure(fg_color=colors["bg"])
     
     try:
+        icon_image = Image.open("icon.png")
+        icon_photo = ImageTk.PhotoImage(icon_image.resize((32, 32)))
+        about_window.iconphoto(True, icon_photo)
+    except:
+        pass
+    
+    about_window.lift()
+    about_window.focus()
+    about_window.grab_set()  # Make it modal
+    
+    try:
         logo_image = ctk.CTkImage(Image.open("icon.png"), size=(64, 64))
         logo_label = ctk.CTkLabel(about_window, image=logo_image, text="")
         logo_label.pack(pady=20)
@@ -307,13 +321,17 @@ def about_dialog():
     ctk.CTkLabel(about_window, text="Ohne - Only Vocals", 
                 font=ctk.CTkFont(size=24, weight="bold")).pack(pady=10)
     
-    ctk.CTkLabel(about_window, text="Professional vocal extraction tool\nPowered by Demucs AI", 
+    ctk.CTkLabel(about_window, text="Professional vocal extraction tool", 
                 font=ctk.CTkFont(size=14), justify="center").pack(pady=10)
     
     ctk.CTkLabel(about_window, text="Created by: Marouane Elhizabri\nLinkedIn: linkedin.com/in/marouaneelhizabri", 
                 font=ctk.CTkFont(size=12), justify="center").pack(pady=20)
     
-    ctk.CTkButton(about_window, text="Close", command=about_window.destroy).pack(pady=20)
+    def close_about():
+        about_window.grab_release()
+        about_window.destroy()
+    
+    ctk.CTkButton(about_window, text="Close", command=close_about).pack(pady=20)
 
 def help_dialog():
     colors = theme.get_colors()
@@ -321,6 +339,17 @@ def help_dialog():
     help_window.title("Help")
     help_window.geometry("500x400")
     help_window.configure(fg_color=colors["bg"])
+    
+    try:
+        icon_image = Image.open("icon.png")
+        icon_photo = ImageTk.PhotoImage(icon_image.resize((32, 32)))
+        help_window.iconphoto(True, icon_photo)
+    except:
+        pass
+    
+    help_window.lift()
+    help_window.focus()
+    help_window.grab_set()  # Make it modal
     
     ctk.CTkLabel(help_window, text="How to Use", 
                 font=ctk.CTkFont(size=20, weight="bold")).pack(pady=20)
@@ -338,7 +367,11 @@ Processing time varies based on video length."""
     ctk.CTkLabel(help_window, text=help_text, font=ctk.CTkFont(size=12), 
                 justify="left", anchor="w").pack(pady=20, padx=30, fill="both")
     
-    ctk.CTkButton(help_window, text="Close", command=help_window.destroy).pack(pady=20)
+    def close_help():
+        help_window.grab_release()
+        help_window.destroy()
+    
+    ctk.CTkButton(help_window, text="Close", command=close_help).pack(pady=20)
 
 def clear_logs():
     log_textbox.delete("1.0", "end")
@@ -356,10 +389,29 @@ app.geometry("800x700")
 app.minsize(750, 650)
 
 try:
-    icon_image = Image.open("icon.png")
-    icon_photo = ImageTk.PhotoImage(icon_image.resize((32, 32)))
-    app.iconphoto(True, icon_photo)
-except:
+    # Try to set icon using iconbitmap first (works best for window title bar)
+    if os.path.exists("icon.png"):
+        # Convert PNG to ICO format temporarily for better compatibility
+        icon_image = Image.open("icon.png")
+        icon_image = icon_image.resize((32, 32), Image.Resampling.LANCZOS)
+        
+        # Save as temporary ICO file
+        temp_ico = "temp_icon.ico"
+        icon_image.save(temp_ico, format='ICO')
+        app.iconbitmap(temp_ico)
+        
+        # Clean up temporary file
+        try:
+            os.remove(temp_ico)
+        except:
+            pass
+    else:
+        # Fallback: try with PhotoImage method
+        icon_image = Image.open("icon.png")
+        icon_photo = ImageTk.PhotoImage(icon_image.resize((32, 32)))
+        app.iconphoto(True, icon_photo)
+except Exception as e:
+    print(f"Could not set window icon: {e}")
     pass
 
 colors = theme.get_colors()
@@ -387,9 +439,15 @@ title_label = ctk.CTkLabel(header_left, text="Ohne - Only Vocals",
                           font=ctk.CTkFont(size=24, weight="bold"))
 title_label.pack(side="left", anchor="w")
 
-theme_btn = ctk.CTkButton(header_frame, text="☀️ Light", command=toggle_theme, 
+header_right = ctk.CTkFrame(header_frame, fg_color="transparent")
+header_right.pack(side="right")
+
+ctk.CTkButton(header_right, text="Help", command=help_dialog, height=32, width=60).pack(side="right", padx=(5, 0))
+ctk.CTkButton(header_right, text="About", command=about_dialog, height=32, width=60).pack(side="right", padx=(5, 0))
+
+theme_btn = ctk.CTkButton(header_right, text="☀️ Light", command=toggle_theme, 
                          width=100, height=32)
-theme_btn.pack(side="right")
+theme_btn.pack(side="right", padx=(0, 5))
 
 # Input section
 input_frame = ctk.CTkFrame(main_frame)
@@ -437,9 +495,6 @@ start_btn.pack(side="left", padx=(0, 10))
 clear_btn = ctk.CTkButton(button_frame, text="Clear Logs", command=clear_logs, 
                          height=45, fg_color=colors["warning"])
 clear_btn.pack(side="left", padx=(0, 10))
-
-ctk.CTkButton(button_frame, text="Help", command=help_dialog, height=45).pack(side="left", padx=(0, 10))
-ctk.CTkButton(button_frame, text="About", command=about_dialog, height=45).pack(side="left")
 
 # Log section
 log_frame = ctk.CTkFrame(main_frame)
