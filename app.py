@@ -432,7 +432,7 @@ ctk.CTkLabel(about_content_frame, text="Professional vocal extraction tool",
 ctk.CTkLabel(about_content_frame, text="Created by: Marouane Elhizabri\nLinkedIn: linkedin.com/in/marouaneelhizabri", 
             font=ctk.CTkFont(size=14), justify="center").pack(pady=(0, 20))
 
-ctk.CTkLabel(about_content_frame, text="Version 1.0\n© 2024 All rights reserved", 
+ctk.CTkLabel(about_content_frame, text="Version 1.0\n© 2025 All rights reserved", 
             font=ctk.CTkFont(size=12), justify="center").pack(pady=(0, 20))
 
 ctk.CTkLabel(about_content_frame, text="Features:", 
