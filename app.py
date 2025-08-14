@@ -23,29 +23,23 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
         
         if local_video_path:
             video_file = Path(local_video_path)
-            log_func(f"Using local video: {video_file.name}")
             progress_func(10, "Using local video file")
         else:
             for existing_video in Path(".").glob("video.*"):
                 try:
                     os.remove(existing_video)
-                    log_func(f"Removed existing file: {existing_video}")
                 except:
                     pass
             
-            log_func("Downloading video...")
             progress_func(10, "Downloading video...")
             
-            # Download with progress tracking
             process = subprocess.Popen(
                 ["yt-dlp", "-f", "bestvideo+bestaudio", "-o", "video.%(ext)s", youtube_url],
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1
             )
             
             for line in process.stdout:
-                # Only show download progress, not all verbose output
                 if "[download]" in line and "%" in line:
-                    log_func(line.strip())
                     match = re.search(r'(\d+(?:\.\d+)?)%', line)
                     if match:
                         percent = float(match.group(1))
@@ -56,14 +50,11 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
                 raise subprocess.CalledProcessError(process.returncode, "yt-dlp")
                 
             video_file = next(Path(".").glob("video.*"))
-            log_func(f"Video downloaded: {video_file.name}")
             progress_func(30, "Video download complete")
 
         audio_file = "audio.wav"
-        log_func("Extracting audio...")
         progress_func(35, "Extracting audio...")
         
-        # Extract audio with minimal logging
         process = subprocess.Popen([
             "ffmpeg", "-y", "-i", str(video_file),
             "-acodec", "pcm_s16le", "-ar", "44100", "-ac", "2",
@@ -72,7 +63,6 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
         
         for line in process.stdout:
             if "time=" in line:
-                # Parse ffmpeg progress
                 time_match = re.search(r'time=(\d+):(\d+):(\d+\.\d+)', line)
                 if time_match:
                     hours, minutes, seconds = time_match.groups()
@@ -83,13 +73,11 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
         if process.returncode != 0:
             raise subprocess.CalledProcessError(process.returncode, "ffmpeg")
             
-        log_func(f"Audio extracted: {audio_file}")
         progress_func(50, "Audio extraction complete")
 
-        log_func("Isolating vocals...")
+        log_func("Starting vocal separation...")
         progress_func(55, "Starting vocal separation...")
         
-        # Demucs with filtered progress output
         process = subprocess.Popen([
             "demucs", "--two-stems=vocals", "-n", DEMUCS_MODEL, audio_file
         ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
@@ -102,7 +90,7 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
                     match = re.search(r'(\d+)%\|[█▉▊▋▌▍▎▏ ]*\|', line)
                     if match:
                         percent = int(match.group(1))
-                        progress_func(55 + (percent * 0.35), f"Separating vocals")
+                        progress_func(55 + (percent * 0.35), f"Separating vocals ...")
                     
         process.wait()
         if process.returncode != 0:
@@ -146,10 +134,8 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
                 
         elif action == "merge":
             output_video = os.path.join(videos_folder, f"{final_title}.mp4")
-            log_func(f"Merging vocals into video as {output_video}...")
             progress_func(95, "Merging vocals with video...")
             
-            # Final merge with progress
             process = subprocess.Popen([
                 "ffmpeg", "-y",
                 "-i", str(video_file),
@@ -195,12 +181,10 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
         except:
             pass
         
-        # Clean up downloaded video files (but not local video files)
         if not local_video_path:
             for video_cleanup in Path(".").glob("video.*"):
                 try:
                     os.remove(video_cleanup)
-                    log_func(f"Cleaned up: {video_cleanup}")
                 except:
                     pass
         
@@ -404,10 +388,7 @@ clear_btn = ctk.CTkButton(button_frame, text="Clear Logs", command=clear_logs,
                          font=ctk.CTkFont(size=16, weight="bold"))
 clear_btn.pack(side="left")
 
-reset_btn = ctk.CTkButton(button_frame, text="Reset All", command=reset_inputs, 
-                         height=50, corner_radius=25, fg_color=colors["primary"],
-                         font=ctk.CTkFont(size=16, weight="bold"))
-reset_btn.pack(side="left", padx=(15, 0))
+
 
 # Log section
 log_frame = ctk.CTkFrame(main_content_frame, corner_radius=20)
@@ -457,7 +438,7 @@ ctk.CTkLabel(about_content_frame, text="Version 1.0\n© 2024 All rights reserved
 ctk.CTkLabel(about_content_frame, text="Features:", 
             font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(30, 10))
 
-features_text = """• AI-powered vocal separation
+features_text = """• AI-powered vocal separation 
 • Support for YouTube URLs and local video files
 • Multiple output formats (WAV audio, MP4 video)
 • Real-time processing progress tracking
