@@ -3,6 +3,7 @@
 # Ohne - Only Vocals Starter
 # -----------------------------
 
+set -e
 cd "$(dirname "$0")"
 
 # -----------------------------
@@ -29,17 +30,17 @@ pip install -r requirements.txt
 # -----------------------------
 echo "[4/5] Downloading ffmpeg and yt-dlp binaries..."
 
-# FFmpeg
-# FFmpeg
-if [ ! -f ffmpeg ]; then
+# ffmpeg + ffprobe
+if [ ! -f ffmpeg ] || [ ! -f ffprobe ]; then
     echo "Downloading ffmpeg..."
     wget -O ffmpeg-release.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
-    # Extract ffmpeg binary using wildcards
-    tar -xJf ffmpeg-release.tar.xz --strip-components=1 --wildcards '*/ffmpeg'
-    rm ffmpeg-release.tar.xz
-    chmod +x ffmpeg
+    tar -xf ffmpeg-release.tar.xz
+    mv ffmpeg-*-amd64-static/ffmpeg .
+    mv ffmpeg-*-amd64-static/ffprobe .
+    rm -rf ffmpeg-*-amd64-static ffmpeg-release.tar.xz
+    chmod +x ffmpeg ffprobe
 else
-    echo "ffmpeg already exists"
+    echo "ffmpeg and ffprobe already exist"
 fi
 
 # yt-dlp
