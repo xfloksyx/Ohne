@@ -10,6 +10,24 @@ import re
 import sys
 
 # -----------------------------
+# Detect platform-specific binaries
+# -----------------------------
+if sys.platform.startswith("win"):
+    FFMPEG_BIN = os.path.join(os.getcwd(), "ffmpeg.exe")
+    YTDLP_BIN = os.path.join(os.getcwd(), "yt-dlp.exe")
+else:
+    FFMPEG_BIN = os.path.join(os.getcwd(), "ffmpeg")
+    YTDLP_BIN = os.path.join(os.getcwd(), "yt-dlp")
+
+# Ensure binaries exist and are executable
+if not os.path.exists(YTDLP_BIN):
+    raise FileNotFoundError(f"yt-dlp not found at {YTDLP_BIN}")
+if not os.path.exists(FFMPEG_BIN):
+    raise FileNotFoundError(f"ffmpeg not found at {FFMPEG_BIN}")
+os.chmod(YTDLP_BIN, 0o755)
+os.chmod(FFMPEG_BIN, 0o755)
+
+# -----------------------------
 # Processing Functions
 # -----------------------------
 DEMUCS_MODEL = "htdemucs"
@@ -20,11 +38,12 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
         os.makedirs(videos_folder, exist_ok=True)
         
         progress_func(0, "Initializing...")
-        
+
         if local_video_path:
             video_file = Path(local_video_path)
             progress_func(10, "Using local video file")
         else:
+            # Cleanup old videos
             for existing_video in Path(".").glob("video.*"):
                 try:
                     os.remove(existing_video)
@@ -34,7 +53,7 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
             progress_func(10, "Downloading video...")
             
             process = subprocess.Popen(
-                ["yt-dlp", "-f", "bestvideo+bestaudio", "-o", "video.%(ext)s", youtube_url],
+                [YTDLP_BIN, "-f", "bestvideo+bestaudio", "-o", "video.%(ext)s", youtube_url],
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1
             )
             
@@ -54,13 +73,13 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
 
         audio_file = "audio.wav"
         progress_func(35, "Extracting audio...")
-        
+
         process = subprocess.Popen([
-            "ffmpeg", "-y", "-i", str(video_file),
+            FFMPEG_BIN, "-y", "-i", str(video_file),
             "-acodec", "pcm_s16le", "-ar", "44100", "-ac", "2",
             audio_file
         ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
-        
+
         for line in process.stdout:
             if "time=" in line:
                 time_match = re.search(r'time=(\d+):(\d+):(\d+\.\d+)', line)
@@ -72,31 +91,36 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
         process.wait()
         if process.returncode != 0:
             raise subprocess.CalledProcessError(process.returncode, "ffmpeg")
-            
+        
         progress_func(50, "Audio extraction complete")
 
+        # -----------------------------
+        # Vocal separation with Demucs
+        # -----------------------------
         log_func("Starting vocal separation...")
         progress_func(55, "Starting vocal separation...")
-        
+
         process = subprocess.Popen([
             "demucs", "--two-stems=vocals", "-n", DEMUCS_MODEL, audio_file
         ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
-        
+
         for line in process.stdout:
             if "Separating track" in line or ("%" in line and "|" in line):
                 log_func(line.strip())
-                # Parse demucs progress bar
                 if "%" in line and "|" in line:
                     match = re.search(r'(\d+)%\|[█▉▊▋▌▍▎▏ ]*\|', line)
                     if match:
                         percent = int(match.group(1))
                         progress_func(55 + (percent * 0.35), f"Separating vocals ...")
-                    
+
         process.wait()
         if process.returncode != 0:
             raise subprocess.CalledProcessError(process.returncode, "demucs")
-            
+
         progress_func(90, "Vocal separation complete")
+        # Continue with merge/extract logic...
+
+
 
         separated_dir = Path("separated") / DEMUCS_MODEL
         vocals_path = None
@@ -137,7 +161,7 @@ def process_video(youtube_url, local_video_path, final_title, action, log_func, 
             progress_func(95, "Merging vocals with video...")
             
             process = subprocess.Popen([
-                "ffmpeg", "-y",
+                FFMPEG_BIN, "-y",
                 "-i", str(video_file),
                 "-i", vocals_path,
                 "-c:v", "copy",

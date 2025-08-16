@@ -1,29 +1,58 @@
 #!/bin/bash
+# -----------------------------
+# Ohne - Only Vocals Starter
+# -----------------------------
+
 cd "$(dirname "$0")"
 
-# --- Check for tkinter ---
-if ! python3 -c "import tkinter" &> /dev/null; then
-    echo "[0/3] tkinter not found. Installing..."
-    if [ -x "$(command -v apt)" ]; then
-        sudo apt update
-        sudo apt install -y python3-tk
-    elif [ -x "$(command -v dnf)" ]; then
-        sudo dnf install -y python3-tkinter
-    elif [ -x "$(command -v pacman)" ]; then
-        sudo pacman -S --noconfirm tk
-    else
-        echo "Package manager not found. Please install tkinter manually."
-        exit 1
-    fi
-fi
-
-echo "[1/3] Creating virtual environment..."
+# -----------------------------
+# Step 1: Create virtual environment
+# -----------------------------
+echo "[1/5] Creating virtual environment..."
 python3 -m venv venv
 
-echo "[2/3] Installing requirements..."
+# -----------------------------
+# Step 2: Activate virtual environment
+# -----------------------------
+echo "[2/5] Activating virtual environment..."
 source venv/bin/activate
+
+# -----------------------------
+# Step 3: Install Python requirements
+# -----------------------------
+echo "[3/5] Installing Python requirements..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
-echo "[3/3] Starting application..."
+# -----------------------------
+# Step 4: Download ffmpeg and yt-dlp binaries
+# -----------------------------
+echo "[4/5] Downloading ffmpeg and yt-dlp binaries..."
+
+# FFmpeg
+# FFmpeg
+if [ ! -f ffmpeg ]; then
+    echo "Downloading ffmpeg..."
+    wget -O ffmpeg-release.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+    # Extract ffmpeg binary using wildcards
+    tar -xJf ffmpeg-release.tar.xz --strip-components=1 --wildcards '*/ffmpeg'
+    rm ffmpeg-release.tar.xz
+    chmod +x ffmpeg
+else
+    echo "ffmpeg already exists"
+fi
+
+# yt-dlp
+if [ ! -f yt-dlp ]; then
+    echo "Downloading yt-dlp..."
+    curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o yt-dlp
+    chmod +x yt-dlp
+else
+    echo "yt-dlp already exists"
+fi
+
+# -----------------------------
+# Step 5: Start the app
+# -----------------------------
+echo "[5/5] Starting Ohne app..."
 python3 app.py
