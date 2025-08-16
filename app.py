@@ -12,12 +12,15 @@ import sys
 # -----------------------------
 # Detect platform-specific binaries
 # -----------------------------
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 if sys.platform.startswith("win"):
-    FFMPEG_BIN = os.path.join(os.getcwd(), "ffmpeg.exe")
-    YTDLP_BIN = os.path.join(os.getcwd(), "yt-dlp.exe")
+    FFMPEG_BIN = os.path.join(SCRIPT_DIR, "ffmpeg.exe")
+    YTDLP_BIN = os.path.join(SCRIPT_DIR, "yt-dlp.exe")
 else:
-    FFMPEG_BIN = os.path.join(os.getcwd(), "ffmpeg")
-    YTDLP_BIN = os.path.join(os.getcwd(), "yt-dlp")
+    FFMPEG_BIN = os.path.join(SCRIPT_DIR, "ffmpeg")
+    YTDLP_BIN = os.path.join(SCRIPT_DIR, "yt-dlp")
+
 
 # Ensure binaries exist and are executable
 if not os.path.exists(YTDLP_BIN):
