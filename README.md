@@ -1,3 +1,4 @@
+
 # Ohne – Only Vocals 🎵
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -19,9 +20,9 @@
 ---
 
 ## 🛠 Getting Started
-
+You can download the zip folder or direcly clone it using ``` git clone https://github.com/xfloksyx/Ohne```. If cloning was your choice, skip the steps of  downloading and unzipping the folder
 ### Linux / Ubuntu
-bash
+```bash
 # 1. Download and extract the ZIP
 unzip ohne.zip
 cd ohne
@@ -32,14 +33,17 @@ sudo chmod +x start.sh run.sh
 # 3. Start the app
 sudo ./start.sh
 ./run.sh
+````
 
 ### Windows
 
-bat
+```bat
 # 1. Extract the downloaded ZIP
 # 2. Double-click start.bat to initialize
 # 3. Run the app using run.bat
+```
 
+---
 
 
 
@@ -68,6 +72,5 @@ Please follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## 📄 License
 
-This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
-
+This project is licensed under the MIT License.
 
