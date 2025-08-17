@@ -1,5 +1,5 @@
 
-# Ohne – Only Vocals 🎵
+# Ohne – Only Vocals 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20|%20Linux-blue)](https://github.com/xfloksyx/ohne-installer/releases)
@@ -37,13 +37,7 @@ sudo ./start.sh
 
 ### Windows
 
-```bat
-# 1. Extract the downloaded ZIP
-# 2. Double-click start.bat to initialize
-# 3. Run the app using run.bat
-```
-
----
+Up till now, I am working on Windows version.
 
 
 
@@ -58,7 +52,7 @@ Ohne is developed by **Marouane El Hizabri** with a mission to provide professio
 
 ## 🤝 Contributing
 
-Contributions are welcome! To contribute:
+Contributions are welcome! To contribute(please contact me first):
 
 1. Fork the repository.
 2. Create a new branch (`git checkout -b feature/YourFeature`).
