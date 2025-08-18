@@ -309,7 +309,13 @@ app.minsize(800, 700)
 
 try:
     if os.path.exists("icon.ico"):
-        app.iconbitmap("icon.ico")
+        if sys.platform.startswith("win"):
+            app.iconbitmap("icon.ico")  # Windows supports .ico
+        else:
+            # Linux/Mac -> use .png instead
+            icon_path = os.path.join(os.path.dirname(__file__), "icon.png")
+            img = Image.open(icon_path)
+            app.iconphoto(True, ImageTk.PhotoImage(img))
 except Exception as e:
     print(f"Could not set window icon: {e}")
 
