@@ -28,8 +28,7 @@ unzip ohne.zip
 cd ohne
 
 # 2. Make scripts executable
-sudo chmod +x start.sh run.sh
-
+sudo chmod +x start.sh 
 # 3. Start the app
 sudo ./start.sh
 ./run.sh
