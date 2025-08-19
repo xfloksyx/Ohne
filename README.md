@@ -20,23 +20,7 @@
 ---
 
 ## 🛠 Getting Started
-You can download the zip folder or direcly clone it using ``` git clone https://github.com/xfloksyx/Ohne```. If cloning was your choice, skip the steps of  downloading and unzipping the folder
-### Linux / Ubuntu
-```bash
-# 1. Download and extract the ZIP
-unzip ohne.zip
-cd ohne
-
-# 2. Make scripts executable
-sudo chmod +x start.sh 
-# 3. Start the app
-sudo ./start.sh
-./run.sh
-````
-
-### Windows
-
-Up till now, I am working on Windows version.
+check www.ohne.space
 
 
 
